@@ -1,0 +1,4 @@
+.stack-work/
+req-test.cabal
+*~
+**Auth.hs
