@@ -75,25 +75,6 @@ newpostsSince subredditName fullname =
         , postsAfter fullname
         ]
 
-baseReq :: Req (Either String Listing)
-baseReq =
-  parseEither parseJSON . responseBody <$>
-  req
-    GET
-    (https "reddit.com" /: "r" /: "earthporn" /: "new.json")
-    NoReqBody
-    jsonResponse
-    options
-  where
-    options :: Option Https
-    options =
-      mconcat
-        [ header "Accept" "application/json"
-        , header "User-Agent" "haskell-reddit-test"
-        , basicAuthHeaders
-        , limit 20
-        ]
-
 reqLink :: Link -> Req BS.ByteString
 reqLink link = responseBody <$> req GET url_ NoReqBody bsResponse mempty
   where
@@ -125,33 +106,6 @@ limit n = "limit" =: n
 -- when pulling from new, the after Fullname you receive can be used with &before=Fullname to retrieve the posts after that post
 postsAfter :: Fullname -> Option s
 postsAfter name = "before" =: name
-
-substream :: Text -> Stream (Of (Either String Listing)) IO ()
-substream subredditName = do
-  init <- liftIO . runReq defaultHttpConfig $ newposts subredditName
-  let mostRecentPostFullname =
-        maybe firstChildLeft Right . maybeHead . children . listingData =<< init
-  S.yield init
-  streamIOFix subrecurse' init
-  where
-    firstChildLeft = Left "No posts"
-    subrecurse' :: Either String Listing -> IO (Either String Listing)
-    subrecurse' x =
-      runReq defaultHttpConfig $
-      either (pure . Left) (subrecurse subredditName) x
-
-subrecurse_ :: Text -> Fullname -> Stream (Of (Either String Listing)) IO ()
-subrecurse_ subredditName mostRecentFullname = do
-  newposts <-
-    runReq defaultHttpConfig $ newpostsSince subredditName mostRecentFullname
-  S.yield $ Left "aoeu"
-
-subrecurse :: Text -> Listing -> Req (Either String Listing)
-subrecurse subredditName listing =
-  maybe
-    (pure . Left $ "No new posts")
-    (newpostsSince subredditName)
-    (after . listingData $ listing)
 
 maybeHead :: V.Vector a -> Maybe a
 maybeHead v =
@@ -186,5 +140,3 @@ latestPostName =
   maybe noNewPosts (Right . name) . maybeHead . children . listingData
   where
     noNewPosts = Left "No new posts" :: Either String a
--- so get init, yield it. if it has children, pass it to recurse. otherwise return what it was given
--- next fxn uses that fullname and tries to get items. 
