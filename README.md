@@ -1,4 +1,4 @@
-# streaming-test
+# req-stream-hs
 
 This is an exercise in using and understanding the Reddit API as well as playing
 around with streams.
