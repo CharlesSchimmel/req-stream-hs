@@ -16,7 +16,7 @@ main :: IO ()
 main =
   S.mapM_ linePerTitle .
   S.take 10 . S.delay 30 . S.filter isRight . S.map postTitles $
-  newSubStream "earthporn"
+  newSubStream "pics"
   where
     postTitles = fmap ((fmap $ T.unpack . title) . children . listingData)
     linePerTitle (Right titles) = Prelude.mapM_ putStrLn titles

@@ -10,5 +10,12 @@ library, using continuation-passing style
 
 # Usage
 
+The following example will fetch new posts from the chosen subreddit and print
+their titles until 10 batches of posts has been received.
+
 ```
+main :: IO ()
+main = S.mapM_ linePerTitle .
+    S.take 10 . S.delay 30 . S.filter isRight . S.map postTitles $
+    newSubStream "mySubreddit"
 ```
